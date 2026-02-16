@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useDebateStore } from '../state/debateState';
 import Avatar from './Avatar';
@@ -6,6 +6,7 @@ import SpeechBubble from './SpeechBubble';
 import ScoreMeter from './ScoreMeter';
 import VotePanel from './VotePanel';
 import EvidenceChart from './EvidenceChart';
+import { playDebateVoice, stopVoice, ensureVoicesLoaded } from '../engine/voiceService';
 
 export default function DebateStage() {
   const {
@@ -20,6 +21,8 @@ export default function DebateStage() {
 
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const voiceInitializedRef = useRef(false);
 
   const currentRound = rounds[currentRoundIndex];
 
@@ -28,7 +31,16 @@ export default function DebateStage() {
   const conEvidenceRound = rounds.find(r => r.round === 3 && r.speaker === 'CON');
   const showChart = currentRound?.round === 3;
 
-  const typeText = useCallback((text: string) => {
+  // Initialize voice on mount
+  useEffect(() => {
+    if (!voiceInitializedRef.current) {
+      ensureVoicesLoaded().then(() => {
+        voiceInitializedRef.current = true;
+      });
+    }
+  }, []);
+
+  const typeText = useCallback((text: string, round: typeof currentRound) => {
     setIsTyping(true);
     setAnimating(true);
     setDisplayedText('');
@@ -45,15 +57,32 @@ export default function DebateStage() {
       }
     }, 18);
 
+    // Play voice synthesis
+    if (isVoiceEnabled && round && voiceInitializedRef.current) {
+      playDebateVoice(text, {
+        speaker: round.speaker,
+        round: round.round,
+        logicScore: round.logic_score,
+        emotionScore: round.emotion_score,
+      }).catch(err => console.error('Voice playback error:', err));
+    }
+
     return () => clearInterval(interval);
-  }, [setAnimating]);
+  }, [setAnimating, isVoiceEnabled]);
 
   useEffect(() => {
     if (currentRound) {
-      const cleanup = typeText(currentRound.argument);
+      const cleanup = typeText(currentRound.argument, currentRound);
       return cleanup;
     }
   }, [currentRoundIndex, currentRound, typeText]);
+
+  // Cleanup voice on unmount
+  useEffect(() => {
+    return () => {
+      stopVoice();
+    };
+  }, []);
 
   if (!currentRound) return null;
 
@@ -62,6 +91,24 @@ export default function DebateStage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen px-4 py-8 relative z-10">
+      {/* Voice Toggle Button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={() => {
+          stopVoice();
+          setIsVoiceEnabled(!isVoiceEnabled);
+        }}
+        className={`absolute top-6 right-6 py-2 px-4 rounded-lg font-display font-bold text-sm uppercase tracking-widest
+          transition-all ${
+          isVoiceEnabled
+            ? 'bg-arena-accent/20 text-arena-accent border border-arena-accent/50'
+            : 'bg-gray-700/20 text-gray-400 border border-gray-700/50'
+        }`}
+      >
+        {isVoiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+      </motion.button>
+
       {/* Round indicator */}
       <motion.div
         key={currentRoundIndex}

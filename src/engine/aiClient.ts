@@ -61,7 +61,7 @@ function normalizeRound(raw: AiRawRound, index: number): RoundData {
   const emotion_score = clampScore(Number(raw.emotion_score ?? 60));
   const rebuttal_strength = clampScore(Number(raw.rebuttal_strength ?? 60));
 
-  const base = {
+  const base: Omit<RoundData, 'total_score'> = {
     round,
     speaker,
     headline,
