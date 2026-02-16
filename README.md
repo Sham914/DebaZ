@@ -1,7 +1,7 @@
-## DebaZ - AI-Powered Debate Arena
+# DebaZ - AI-Powered Debate Arena
 DebaZ is an interactive debate platform that pits AI-generated arguments against each other in an engaging, real-time debate experience.
 
-# Features
+## Features
 *AI-Powered Debates:* Generate structured 5-round debates with AI-crafted arguments, evidence, and emotional appeals using Google Gemini API. Each debate features two opposing positions with dynamic scoring.
 
 *Intelligent Fallback System:* Seamless local debate generation with 30+ pre-loaded topics if the API is unavailable. Fallback debates are fully featured with diverse arguments, realistic data points, and proper pro/con framing.
