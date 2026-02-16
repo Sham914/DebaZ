@@ -26,3 +26,24 @@ DebaZ is an interactive debate platform that pits AI-generated arguments against
 - Voting phase: Audience participation affects scoring
 - Victory screen: Final results with winner determination
 
+
+### How It Works
+User submits a topic or requests random generation
+AI generates debate structure: topic, pro/con headlines, 10-round argument framework
+App transitions through 5 phases with animated reveals
+Each round alternates between PRO and CON speakers with auto-playing voice
+Users vote during the debate to influence final scores
+Winner is determined by cumulative scores across all rounds
+If AI fails, seamless fallback to local debate generation with same quality
+
+
+## Key Features Breakdown
+*Smart Fallback:* 30 local fallback topics with diverse arguments if API unavailable. Fallback provides same debate structure and quality as AI-generated content.
+
+*Voice Customization:* PRO speaker: pitch 0.85 (authoritative), CON speaker: pitch 1.2 (thoughtful). Speech rate adjusts (1.15x for logic-heavy, 0.85x for emotion-heavy).
+
+*Scoring System:* Calculated from word count, logic score (0-100), emotion score (0-100), rebuttal strength (0-100), with bonus points for high logic+emotion combos.
+
+*Round Types:* Each debate has 5 structure-varied rounds covering Opening Statements, Rebuttals, Evidence/Data, Emotional Appeals, and Closing Arguments.
+
+*Performance:* Fast debates (2-3 seconds for AI generation), builds to 508KB minified, runs on any modern browser, no external dependencies for voice.
