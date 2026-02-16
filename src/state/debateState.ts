@@ -55,13 +55,22 @@ export const useDebateStore = create<DebateState>((set, get) => ({
     const trimmed = raw.trim();
     if (!trimmed) return;
 
+    const isPlaceholderHeadline = (headline?: string) => {
+      if (!headline || !headline.trim()) return true;
+      const normalized = headline.trim().toLowerCase();
+      return normalized === 'supporting this position' || normalized === 'opposing this position';
+    };
+
     const tryAi = async (topicInput: string) => {
       const ai = await fetchAiDebate(topicInput);
       const safeTopic = filterTopic(ai.topic || topicInput).topic;
+      const framed = frameTopic(safeTopic);
+      const proHeadline = isPlaceholderHeadline(ai.proHeadline) ? framed.pro.headline : ai.proHeadline;
+      const conHeadline = isPlaceholderHeadline(ai.conHeadline) ? framed.con.headline : ai.conHeadline;
       set({
         topic: safeTopic,
-        proHeadline: ai.proHeadline,
-        conHeadline: ai.conHeadline,
+        proHeadline,
+        conHeadline,
         rounds: ai.rounds,
         aiGenerated: true,
         phase: 'framing',
@@ -100,10 +109,13 @@ export const useDebateStore = create<DebateState>((set, get) => ({
     try {
       const ai = await fetchAiDebate(topic);
       const safeTopic = filterTopic(ai.topic || topic).topic;
+      const framed = frameTopic(safeTopic);
+      const proHeadline = isPlaceholderHeadline(ai.proHeadline) ? framed.pro.headline : ai.proHeadline;
+      const conHeadline = isPlaceholderHeadline(ai.conHeadline) ? framed.con.headline : ai.conHeadline;
       set({
         topic: safeTopic,
-        proHeadline: ai.proHeadline,
-        conHeadline: ai.conHeadline,
+        proHeadline,
+        conHeadline,
         rounds: ai.rounds,
         aiGenerated: true,
         phase: 'framing',

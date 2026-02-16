@@ -1,10 +1,10 @@
 /**
- * Google Cloud Text-to-Speech Voice Service
- * Free tier: 1 million characters per month (way more than needed)
- * 100% free, no premium required
+ * Hybrid Voice Service
+ * Primary: Web Speech API (built-in, no setup, no billing)
+ * Fallback: Same Web Speech API with enhanced configuration
+ * 
+ * TRUE 100% FREE - No API keys, no billing, no premium needed
  */
-
-import { RoundData } from './debateGenerator';
 
 export interface VoiceConfig {
   speaker: 'PRO' | 'CON';
@@ -14,110 +14,80 @@ export interface VoiceConfig {
   argument: string;
 }
 
-// Google Cloud voices for our characters
+// Voice configuration for character personalities
 const VOICE_CONFIG = {
   PRO: {
     name: 'ALEX',
-    languageCode: 'en-US',
-    voiceName: 'en-US-Neural2-C', // Professional male voice
-    ssmlGender: 'MALE',
+    pitch: 0.85, // Slightly lower, more authoritative
+    volume: 0.85,
   },
   CON: {
     name: 'SOPHIA',
-    languageCode: 'en-US',
-    voiceName: 'en-US-Neural2-F', // Intelligent female voice
-    ssmlGender: 'FEMALE',
+    pitch: 1.2, // Slightly higher, more thoughtful
+    volume: 0.85,
   },
 };
 
-let currentAudio: HTMLAudioElement | null = null;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
 let isPlaying = false;
+let suppressInterruptError = false;
 
 export function isVoicePlaying(): boolean {
   return isPlaying;
 }
 
 export function stopVoice(): void {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    suppressInterruptError = true;
+    window.speechSynthesis.cancel();
   }
   isPlaying = false;
+  currentUtterance = null;
 }
 
-/**
- * Add SSML emphasis based on debate metrics
- */
-function addEmphasis(text: string, config: VoiceConfig): string {
-  // For high-emotion content, add emphasis tags
-  if (config.emotionScore > 75) {
-    // Add breaks and emphasis for dramatic effect
-    return text
-      .split('. ')
-      .map((sentence, i) => {
-        if (i > 0) return `<break time="200ms"/>${sentence}`;
-        return sentence;
-      })
-      .join('. ');
-  }
+function getVoicesAsync(): Promise<SpeechSynthesisVoice[]> {
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length) return Promise.resolve(voices);
 
-  // For high-logic content, speak faster
-  if (config.logicScore > 80) {
-    return `<prosody rate="1.1">${text}</prosody>`;
-  }
+  return new Promise((resolve) => {
+    const handleVoicesChanged = () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      resolve(window.speechSynthesis.getVoices());
+    };
 
-  return text;
-}
-
-/**
- * Fetch audio from Google Cloud Text-to-Speech API
- */
-async function fetchGoogleTTSAudio(text: string, speaker: 'PRO' | 'CON'): Promise<string> {
-  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('Google API key not configured. Use VITE_GOOGLE_API_KEY or VITE_GEMINI_API_KEY in .env');
-  }
-
-  const voiceConfig = VOICE_CONFIG[speaker];
-  const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      input: { text },
-      voice: {
-        languageCode: voiceConfig.languageCode,
-        name: voiceConfig.voiceName,
-        ssmlGender: voiceConfig.ssmlGender,
-      },
-      audioConfig: {
-        audioEncoding: 'MP3',
-        pitch: speaker === 'PRO' ? -2 : 2, // ALEX lower, SOPHIA higher
-        speakingRate: 1.0,
-      },
-    }),
+    window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+    setTimeout(() => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      resolve(window.speechSynthesis.getVoices());
+    }, 300);
   });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error('Google TTS API error:', error);
-    throw new Error(`Google TTS API error: ${response.status}`);
-  }
-
-  const data = await response.json() as { audioContent?: string };
-  if (!data.audioContent) {
-    throw new Error('No audio content in response');
-  }
-
-  return data.audioContent;
 }
 
 /**
- * Play debate with Google Cloud AI voice
+ * Calculate speech rate based on debate metrics
+ * Logic-heavy = faster, Emotion-heavy = slower
+ */
+function calculateSpeechRate(config: VoiceConfig): number {
+  const { logicScore, emotionScore } = config;
+
+  if (logicScore > 80) {
+    return 1.15; // 15% faster for data-driven arguments
+  }
+
+  if (emotionScore > 80) {
+    return 0.85; // 15% slower for emotional impact
+  }
+
+  if (logicScore > 75 && emotionScore > 75) {
+    return 1.0; // Normal for balanced arguments
+  }
+
+  return 1.0; // Default
+}
+
+/**
+ * Play debate using Web Speech API with enhanced voice config
+ * No API keys, no billing, 100% free
  */
 export async function playDebateVoice(
   text: string,
@@ -127,47 +97,71 @@ export async function playDebateVoice(
   // Stop any current playback
   stopVoice();
 
-  try {
-    // Add SSML emphasis based on metrics
-    const emphasizedText = addEmphasis(text, config);
+  return new Promise((resolve) => {
+    try {
+      const voiceConfig = VOICE_CONFIG[config.speaker];
+      const utterance = new SpeechSynthesisUtterance(text);
 
-    // Fetch audio from Google Cloud TTS
-    const audioBase64 = await fetchGoogleTTSAudio(emphasizedText, config.speaker);
+      // Get available voices
+      const voices = window.speechSynthesis.getVoices();
+      let selectedVoice = voices[0];
 
-    // Convert base64 to blob and play
-    const binaryString = atob(audioBase64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+      if (!voices.length) {
+        getVoicesAsync().then((loadedVoices) => {
+          if (loadedVoices.length) {
+            selectedVoice = loadedVoices[0];
+          }
+        });
+      }
+
+      // Try to find the best voice available
+      for (const voice of voices) {
+        // Prefer Google, Microsoft, or natural-sounding voices
+        if (voice.name.includes('Google US English')) {
+          selectedVoice = voice;
+          break;
+        }
+        if (config.speaker === 'PRO' && voice.name.toLowerCase().includes('male')) {
+          selectedVoice = voice;
+        }
+        if (config.speaker === 'CON' && voice.name.toLowerCase().includes('female')) {
+          selectedVoice = voice;
+        }
+      }
+
+      utterance.voice = selectedVoice;
+      utterance.pitch = voiceConfig.pitch;
+      utterance.rate = calculateSpeechRate(config);
+      utterance.volume = voiceConfig.volume;
+      utterance.lang = 'en-US';
+
+      isPlaying = true;
+      currentUtterance = utterance;
+
+      utterance.onend = () => {
+        isPlaying = false;
+        onComplete?.();
+        resolve();
+      };
+
+      utterance.onerror = (event) => {
+        if (!(event.error === 'interrupted' && suppressInterruptError)) {
+          console.error('Speech error:', event);
+        }
+        suppressInterruptError = false;
+        isPlaying = false;
+        onComplete?.();
+        resolve();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Voice synthesis error:', error);
+      isPlaying = false;
+      onComplete?.();
+      resolve();
     }
-    const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
-    const audioUrl = URL.createObjectURL(audioBlob);
-
-    currentAudio = new Audio(audioUrl);
-    isPlaying = true;
-
-    currentAudio.onended = () => {
-      isPlaying = false;
-      URL.revokeObjectURL(audioUrl);
-      onComplete?.();
-    };
-
-    currentAudio.onerror = (error) => {
-      console.error('Audio playback error:', error);
-      isPlaying = false;
-      onComplete?.();
-    };
-
-    currentAudio.play().catch(err => {
-      console.error('Failed to play audio:', err);
-      isPlaying = false;
-      onComplete?.();
-    });
-  } catch (error) {
-    console.error('Voice synthesis failed:', error);
-    isPlaying = false;
-    throw error;
-  }
+  });
 }
 
 /**
@@ -176,7 +170,6 @@ export async function playDebateVoice(
 export function getCharacterInfo(speaker: 'PRO' | 'CON') {
   return {
     name: VOICE_CONFIG[speaker].name,
-    voiceName: VOICE_CONFIG[speaker].voiceName,
   };
 }
 

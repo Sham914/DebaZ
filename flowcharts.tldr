@@ -194,7 +194,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -238,7 +238,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 21.38392027014084,
 				"start": {
@@ -282,7 +282,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -326,7 +326,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -392,16 +392,16 @@
 			"typeName": "binding"
 		},
 		{
-			"x": 258.05754124413534,
-			"y": 478.4375796207022,
-			"rotation": 5.8817595792208905,
+			"x": 259.8668085282515,
+			"y": 480.2839884092608,
+			"rotation": 5.759586531581287,
 			"isLocked": false,
 			"opacity": 1,
 			"meta": {},
 			"id": "shape:LBYhR9xNGPoRWCcCEVlT1",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 36.07500076293945,
 				"font": "draw",
@@ -434,24 +434,24 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 667.5157419377915,
-			"y": 54.22072538647262,
-			"z": 0.4902786723791838,
+			"x": 852.0304391015864,
+			"y": 164.4700993581663,
+			"z": 0.33862957382949527,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
 		},
 		{
-			"x": 452.5072341694383,
-			"y": 468.37378447314376,
-			"rotation": 0.7853981633974485,
+			"x": 480.86716010230975,
+			"y": 473.8268155821211,
+			"rotation": 0.5061454830783558,
 			"isLocked": false,
 			"opacity": 1,
 			"meta": {},
 			"id": "shape:BJxUAcW7wRVqD_DB_VWD9",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 27.287500381469727,
 				"font": "draw",
@@ -601,7 +601,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0.40368167862434723,
 				"start": {
@@ -645,7 +645,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -702,9 +702,8 @@
 				"isPrecise": true,
 				"isExact": false,
 				"normalizedAnchor": {
-					"x": 0.25,
-					"y": 0.5596703787750882,
-					"z": 1
+					"x": 0.4219587090610065,
+					"y": 0.5704510332722992
 				},
 				"snap": "none",
 				"terminal": "start"
@@ -890,9 +889,7 @@
 		{
 			"editingShapeId": null,
 			"croppingShapeId": null,
-			"selectedShapeIds": [
-				"shape:UX8-0f0AJNZ8b_OtZ4COY"
-			],
+			"selectedShapeIds": [],
 			"hoveredShapeId": null,
 			"erasingShapeIds": [],
 			"hintingShapeIds": [],
@@ -1019,7 +1016,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -1117,7 +1114,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -1560,7 +1557,7 @@
 			"id": "shape:miTOrkg_i4otwhy4ifvjC",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 36.07500076293945,
 				"font": "draw",
@@ -1625,7 +1622,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 4.840021344503909,
 				"start": {
@@ -1664,7 +1661,7 @@
 			"id": "shape:UX8-0f0AJNZ8b_OtZ4COY",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "green",
 				"size": "s",
 				"w": 131.8625030517578,
 				"font": "draw",
@@ -1766,7 +1763,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -1805,7 +1802,7 @@
 			"id": "shape:hXXY8EoYlsuRNrXfVhma6",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "green",
 				"size": "s",
 				"w": 123.3375015258789,
 				"font": "draw",
@@ -1852,7 +1849,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -1941,14 +1938,12 @@
 			"followingUserId": null,
 			"opacityForNextShape": 1,
 			"stylesForNextShape": {
-				"tldraw:geo": "rectangle",
-				"tldraw:font": "sans",
-				"tldraw:size": "m"
+				"tldraw:color": "light-red"
 			},
 			"brush": null,
 			"scribbles": [],
 			"cursor": {
-				"type": "move",
+				"type": "default",
 				"rotation": 0
 			},
 			"isFocusMode": false,
@@ -1959,7 +1954,7 @@
 				"x": 0,
 				"y": 0,
 				"w": 907.2000122070312,
-				"h": 576
+				"h": 547.2000122070312
 			},
 			"insets": [
 				false,
@@ -2033,7 +2028,7 @@
 			"id": "shape:HlFcZNt2F0ZA8gM3pcDZ6",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 27.287500381469727,
 				"font": "draw",
@@ -2164,7 +2159,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -2221,7 +2216,7 @@
 			"id": "shape:8fPtRGIGn3wQ8yq0i8khG",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 27.287500381469727,
 				"font": "draw",
@@ -2268,7 +2263,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": -16.851145463552417,
 				"start": {
@@ -2307,7 +2302,7 @@
 			"id": "shape:DMVd3QIXsP254rayxxkJp",
 			"type": "text",
 			"props": {
-				"color": "black",
+				"color": "light-red",
 				"size": "s",
 				"w": 36.07500076293945,
 				"font": "draw",
@@ -2354,7 +2349,7 @@
 				"dash": "draw",
 				"size": "s",
 				"fill": "none",
-				"color": "black",
+				"color": "yellow",
 				"labelColor": "black",
 				"bend": 0,
 				"start": {
@@ -2380,7 +2375,7 @@
 				"scale": 1
 			},
 			"parentId": "page:page",
-			"index": "a7VRJfWN",
+			"index": "a7sOapXl",
 			"typeName": "shape"
 		}
 	]
