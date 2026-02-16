@@ -107,7 +107,7 @@ export default function TopicInput() {
         transition={{ delay: 1.5 }}
         className="mt-8 text-xs text-gray-500 uppercase tracking-widest"
       >
-        Built for Google Antigravity
+        Built for Gen Z Debaters
       </motion.p>
     </motion.div>
   );

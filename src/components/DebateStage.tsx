@@ -6,7 +6,7 @@ import SpeechBubble from './SpeechBubble';
 import ScoreMeter from './ScoreMeter';
 import VotePanel from './VotePanel';
 import EvidenceChart from './EvidenceChart';
-import { playDebateVoice, stopVoice } from '../engine/elevenlabsVoiceService';
+import { playDebateVoice, stopVoice } from '../engine/googleTtsVoiceService';
 
 export default function DebateStage() {
   const {
