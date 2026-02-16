@@ -7,6 +7,12 @@ import { calculateTotalScores, getWinner } from '../engine/scoringEngine';
 
 export type AppPhase = 'input' | 'framing' | 'debate' | 'victory';
 
+const isPlaceholderHeadline = (headline?: string) => {
+  if (!headline || !headline.trim()) return true;
+  const normalized = headline.trim().toLowerCase();
+  return normalized === 'supporting this position' || normalized === 'opposing this position';
+};
+
 interface DebateState {
   phase: AppPhase;
   topic: string;
@@ -54,12 +60,6 @@ export const useDebateStore = create<DebateState>((set, get) => ({
   submitTopic: async (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-
-    const isPlaceholderHeadline = (headline?: string) => {
-      if (!headline || !headline.trim()) return true;
-      const normalized = headline.trim().toLowerCase();
-      return normalized === 'supporting this position' || normalized === 'opposing this position';
-    };
 
     const tryAi = async (topicInput: string) => {
       const ai = await fetchAiDebate(topicInput);
