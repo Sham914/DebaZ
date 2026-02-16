@@ -6,7 +6,7 @@ import SpeechBubble from './SpeechBubble';
 import ScoreMeter from './ScoreMeter';
 import VotePanel from './VotePanel';
 import EvidenceChart from './EvidenceChart';
-import { playDebateVoice, stopVoice, ensureVoicesLoaded } from '../engine/voiceService';
+import { playDebateVoice, stopVoice } from '../engine/elevenlabsVoiceService';
 
 export default function DebateStage() {
   const {
@@ -22,7 +22,8 @@ export default function DebateStage() {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
-  const voiceInitializedRef = useRef(false);
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
+  const voiceTaskRef = useRef<Promise<void> | null>(null);
 
   const currentRound = rounds[currentRoundIndex];
 
@@ -30,15 +31,6 @@ export default function DebateStage() {
   const proEvidenceRound = rounds.find(r => r.round === 3 && r.speaker === 'PRO');
   const conEvidenceRound = rounds.find(r => r.round === 3 && r.speaker === 'CON');
   const showChart = currentRound?.round === 3;
-
-  // Initialize voice on mount
-  useEffect(() => {
-    if (!voiceInitializedRef.current) {
-      ensureVoicesLoaded().then(() => {
-        voiceInitializedRef.current = true;
-      });
-    }
-  }, []);
 
   const typeText = useCallback((text: string, round: typeof currentRound) => {
     setIsTyping(true);
@@ -57,14 +49,25 @@ export default function DebateStage() {
       }
     }, 18);
 
-    // Play voice synthesis
-    if (isVoiceEnabled && round && voiceInitializedRef.current) {
-      playDebateVoice(text, {
+    // Play voice synthesis with ElevenLabs
+    if (isVoiceEnabled && round) {
+      setIsVoiceLoading(true);
+      const voicePromise = playDebateVoice(text, {
         speaker: round.speaker,
         round: round.round,
         logicScore: round.logic_score,
         emotionScore: round.emotion_score,
-      }).catch(err => console.error('Voice playback error:', err));
+        argument: text,
+      })
+        .catch(err => {
+          console.error('Voice synthesis error:', err);
+          // Continue without voice if API fails
+        })
+        .finally(() => {
+          setIsVoiceLoading(false);
+        });
+      
+      voiceTaskRef.current = voicePromise;
     }
 
     return () => clearInterval(interval);
@@ -81,6 +84,9 @@ export default function DebateStage() {
   useEffect(() => {
     return () => {
       stopVoice();
+      if (voiceTaskRef.current) {
+        voiceTaskRef.current = null;
+      }
     };
   }, []);
 
@@ -99,14 +105,17 @@ export default function DebateStage() {
           stopVoice();
           setIsVoiceEnabled(!isVoiceEnabled);
         }}
+        disabled={isVoiceLoading}
         className={`absolute top-6 right-6 py-2 px-4 rounded-lg font-display font-bold text-sm uppercase tracking-widest
           transition-all ${
-          isVoiceEnabled
-            ? 'bg-arena-accent/20 text-arena-accent border border-arena-accent/50'
-            : 'bg-gray-700/20 text-gray-400 border border-gray-700/50'
+          isVoiceLoading
+            ? 'bg-arena-accent/10 text-arena-accent/50 border border-arena-accent/25 cursor-wait'
+            : isVoiceEnabled
+            ? 'bg-arena-accent/20 text-arena-accent border border-arena-accent/50 hover:bg-arena-accent/30'
+            : 'bg-gray-700/20 text-gray-400 border border-gray-700/50 hover:bg-gray-700/30'
         }`}
       >
-        {isVoiceEnabled ? '🔊 Voice ON' : '🔇 Voice OFF'}
+        {isVoiceLoading ? '⏳ Generating...' : isVoiceEnabled ? '🎙️ Voice ON' : '🔇 Voice OFF'}
       </motion.button>
 
       {/* Round indicator */}
