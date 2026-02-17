@@ -1,16 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-function readBody(req: VercelRequest): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (chunk: Buffer | string) => {
-      data += chunk.toString();
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
-
 function buildPrompt(action: string, topic?: string): string {
   if (action === 'random_topic') {
     return [
@@ -120,6 +109,18 @@ function extractJson(text: string): unknown {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers to allow frontend requests
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token,X-Requested-With,Accept,Accept-Version,Content-Length,Content-MD5,Content-Type,Date,X-Api-Version');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method Not Allowed' });
     return;
@@ -128,10 +129,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const apiKey = process.env.GEMINI_API_KEY || '';
   const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
+  if (!apiKey) {
+    console.error('[AI] GEMINI_API_KEY environment variable is not set');
+    res.status(500).json({ error: 'Server configuration error: Missing API key' });
+    return;
+  }
+
   let payload: { action?: string; topic?: string } = {};
   try {
-    payload = Array.isArray(req.body) ? {} : (req.body || {});
+    // Vercel automatically parses JSON body for us
+    payload = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const action = payload.action || 'generate_debate';
+    console.log(`[AI] Processing action: ${action}, topic: ${payload.topic || 'random'}`);
     const prompt = buildPrompt(action, payload.topic);
     const text = await callGeminiWithRetry(prompt, apiKey, model, 2);
     const json = extractJson(text);
@@ -139,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).json(json);
   } catch (error) {
     const action = payload.action || 'generate_debate';
-    console.error(`[AI] Gemini proxy failed for action: ${action}`, error);
+    console.error(`[AI] Gemini proxy failed for action: ${action}`, error instanceof Error ? error.message : String(error));
     res.status(502).json({ error: 'AI request failed. Please try again.' });
   }
 }
