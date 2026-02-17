@@ -7,6 +7,7 @@ export default function TopicInput() {
   const submitTopic = useDebateStore(s => s.submitTopic);
   const randomTopic = useDebateStore(s => s.randomTopic);
   const isLoadingAI = useDebateStore(s => s.isLoadingAI);
+  const aiError = useDebateStore(s => s.aiError);
 
   const handleSubmit = async () => {
     if (isLoadingAI) return;
@@ -96,6 +97,12 @@ export default function TopicInput() {
         {isLoadingAI && (
           <p className="mt-6 text-xs text-gray-500 uppercase tracking-widest">
             AI crafting the debate lineup
+          </p>
+        )}
+
+        {aiError && !isLoadingAI && (
+          <p className="mt-4 text-sm text-red-400 tracking-wide">
+            {aiError}
           </p>
         )}
       </motion.div>

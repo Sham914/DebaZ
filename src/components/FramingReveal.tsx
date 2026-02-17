@@ -26,7 +26,7 @@ function TypewriterText({ text, delay = 0, speed = 30, className = '' }: { text:
 }
 
 export default function FramingReveal() {
-  const { proHeadline, conHeadline, topic, startDebate } = useDebateStore();
+  const { proHeadline, conHeadline, topic, startDebate, isLoadingAI, aiError } = useDebateStore();
   const [showButton, setShowButton] = useState(false);
 
   useEffect(() => {
@@ -103,17 +103,27 @@ export default function FramingReveal() {
 
       {/* Start Debate */}
       {showButton && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: [1, 1.05, 1] }}
-          transition={{ duration: 0.5, scale: { repeat: Infinity, duration: 1.5 } }}
-          onClick={startDebate}
-          className="mt-12 py-5 px-16 rounded-2xl font-display font-bold text-xl uppercase tracking-widest
-            bg-gradient-to-r from-arena-pro via-arena-accent to-arena-con text-black
-            shadow-2xl hover:shadow-arena-accent/40 transition-shadow"
-        >
-          ⚔️ Begin The Clash
-        </motion.button>
+        <>
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: isLoadingAI ? 1 : [1, 1.05, 1] }}
+            transition={{ duration: 0.5, scale: { repeat: isLoadingAI ? 0 : Infinity, duration: 1.5 } }}
+            onClick={startDebate}
+            disabled={isLoadingAI}
+            className="mt-12 py-5 px-16 rounded-2xl font-display font-bold text-xl uppercase tracking-widest
+              bg-gradient-to-r from-arena-pro via-arena-accent to-arena-con text-black
+              shadow-2xl hover:shadow-arena-accent/40 transition-shadow
+              disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isLoadingAI ? '⚡ Generating Debate...' : '⚔️ Begin The Clash'}
+          </motion.button>
+          
+          {aiError && !isLoadingAI && (
+            <p className="mt-4 text-sm text-red-400 tracking-wide">
+              {aiError}
+            </p>
+          )}
+        </>
       )}
     </motion.div>
   );

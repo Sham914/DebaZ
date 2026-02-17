@@ -7,8 +7,14 @@ export interface AiDebateResponse {
   rounds: RoundData[];
 }
 
+export interface AiFramingResponse {
+  topic: string;
+  proHeadline: string;
+  conHeadline: string;
+}
+
 interface AiRequestPayload {
-  action: 'generate_debate' | 'random_topic';
+  action: 'generate_debate' | 'generate_framing' | 'random_topic';
   topic?: string;
 }
 
@@ -28,6 +34,17 @@ interface AiRawDebateResponse {
   proHeadline?: string;
   conHeadline?: string;
   rounds?: AiRawRound[];
+}
+
+interface AiRawFramingResponse {
+  topic?: string;
+  proHeadline?: string;
+  conHeadline?: string;
+}
+
+interface RetryOptions {
+  attempts?: number;
+  delayMs?: number;
 }
 
 function clampScore(value: number, min = 0, max = 100): number {
@@ -95,6 +112,29 @@ async function postAi(payload: AiRequestPayload): Promise<unknown> {
   return response.json();
 }
 
+async function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function postAiWithRetry(payload: AiRequestPayload, options: RetryOptions = {}): Promise<unknown> {
+  const attempts = options.attempts ?? 3;
+  const delayMs = options.delayMs ?? 500;
+  let lastError: unknown = null;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await postAi(payload);
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) {
+        await wait(delayMs * attempt);
+      }
+    }
+  }
+
+  throw lastError ?? new Error('AI request failed after retries.');
+}
+
 function ensureDebateResponse(raw: unknown): AiDebateResponse {
   const data = raw as AiRawDebateResponse;
   if (!data || !data.proHeadline || !data.conHeadline || !Array.isArray(data.rounds)) {
@@ -114,13 +154,31 @@ function ensureDebateResponse(raw: unknown): AiDebateResponse {
   };
 }
 
-export async function fetchAiDebate(topic: string): Promise<AiDebateResponse> {
-  const raw = await postAi({ action: 'generate_debate', topic });
+function ensureFramingResponse(raw: unknown, fallbackTopic: string): AiFramingResponse {
+  const data = raw as AiRawFramingResponse;
+  if (!data || !data.proHeadline || !data.conHeadline) {
+    throw new Error('AI response missing framing data.');
+  }
+
+  return {
+    topic: data.topic ?? fallbackTopic,
+    proHeadline: data.proHeadline,
+    conHeadline: data.conHeadline,
+  };
+}
+
+export async function fetchAiDebate(topic: string, options?: RetryOptions): Promise<AiDebateResponse> {
+  const raw = await postAiWithRetry({ action: 'generate_debate', topic }, options);
   return ensureDebateResponse(raw);
 }
 
+export async function fetchAiFraming(topic: string, options?: RetryOptions): Promise<AiFramingResponse> {
+  const raw = await postAiWithRetry({ action: 'generate_framing', topic }, options);
+  return ensureFramingResponse(raw, topic);
+}
+
 export async function fetchAiRandomTopic(): Promise<string> {
-  const raw = await postAi({ action: 'random_topic' });
+  const raw = await postAiWithRetry({ action: 'random_topic' });
   const data = raw as { topic?: string };
   if (!data?.topic || typeof data.topic !== 'string') {
     throw new Error('AI response missing topic.');

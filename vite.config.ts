@@ -22,19 +22,49 @@ function buildPrompt(action: string, topic?: string): string {
     return [
       'Return JSON only with one field: topic.',
       'Provide a single debate topic that is safe, non-violent, and not hateful.',
+      'Make it quick and relevant to current global events or trending public issues.',
       'Keep it concise and suitable for a fun debate stage.',
       'Output format:',
       '{"topic":"..."}'
     ].join('\n');
   }
 
+  if (action === 'generate_framing') {
+    return [
+      'You are generating debate framing headlines.',
+      'Return JSON only with fields: topic, proHeadline, conHeadline.',
+      'Each headline must be a clear, logically coherent claim specific to the topic.',
+      'Avoid generic slogans and avoid ALL CAPS.',
+      'Aim for 8-14 words per headline in sentence case.',
+      'Keep the content safe, non-violent, and not hateful.',
+      `Topic: ${topic ?? ''}`
+    ].join('\n');
+  }
+
   return [
-    'You are generating structured debate content.',
-    'Return JSON only with fields: topic, proHeadline, conHeadline, rounds.',
-    'rounds must be an array of 10 items (5 rounds x 2 speakers).',
-    'Each round item fields: round (1-5), speaker (PRO or CON), headline, argument, data_points (string array), emotion_score (0-100), logic_score (0-100), rebuttal_strength (0-100).',
-    'Keep the content safe, non-violent, and not hateful.',
-    `Topic: ${topic ?? ''}`
+    'You must return ONLY valid JSON. No markdown, no explanations, no extra text.',
+    'Generate structured debate content with these exact fields:',
+    '{',
+    '  "topic": "string",',
+    '  "proHeadline": "string (8-14 words, sentence case, specific claim)",',
+    '  "conHeadline": "string (8-14 words, sentence case, specific claim)",',
+    '  "rounds": [',
+    '    {',
+    '      "round": number (1-5),',
+    '      "speaker": "PRO" or "CON",',
+    '      "headline": "string",',
+    '      "argument": "string (2-4 sentences)",',
+    '      "data_points": ["string", "string"],',
+    '      "emotion_score": number (0-100),',
+    '      "logic_score": number (0-100),',
+    '      "rebuttal_strength": number (0-100)',
+    '    }',
+    '  ]',
+    '}',
+    'Generate 10 rounds total (5 rounds, 2 speakers each, alternating PRO/CON).',
+    'Keep arguments concise, safe, and non-violent.',
+    `Topic: ${topic ?? ''}`,
+    'Return ONLY the JSON object, nothing else.'
   ].join('\n');
 }
 
@@ -60,7 +90,7 @@ async function callGemini(prompt: string, apiKey: string, model: string): Promis
       generationConfig: {
         temperature: 0.7,
         topP: 0.9,
-        maxOutputTokens: 1400,
+        maxOutputTokens: 8000,
       },
     }),
   });
@@ -78,15 +108,43 @@ async function callGemini(prompt: string, apiKey: string, model: string): Promis
   return text;
 }
 
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function callGeminiWithRetry(prompt: string, apiKey: string, model: string, attempts = 3): Promise<string> {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await callGemini(prompt, apiKey, model);
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Gemini] Attempt ${attempt}/${attempts} failed:`, error instanceof Error ? error.message : error);
+      if (attempt < attempts) {
+        const delay = 1000 * attempt; // Exponential backoff for rate limits
+        await wait(delay);
+      }
+    }
+  }
+
+  throw lastError ?? new Error('Gemini API error after retries');
+}
+
 function extractJson(text: string): unknown {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start === -1 || end === -1 || end <= start) {
+    console.error('[extractJson] Raw response:', text.substring(0, 500));
     throw new Error('No JSON object found');
   }
 
   const jsonText = text.slice(start, end + 1);
-  return JSON.parse(jsonText);
+  try {
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error('[extractJson] Failed to parse JSON:', jsonText.substring(0, 500));
+    throw error;
+  }
 }
 
 // Local debate generation (fallback when API fails)
@@ -131,13 +189,28 @@ function generateScore(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'of', 'to', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'for', 'in', 'on', 'with', 'as', 'by',
+  'at', 'from', 'do', 'does', 'did', 'should', 'could', 'can', 'will', 'would', 'must', 'may', 'might', 'we', 'our',
+]);
+
+function normalizeTopicCore(topic: string, maxWords = 4): string {
+  const cleaned = topic.replace(/[?!.]+$/g, '').trim();
+  const rawWords = cleaned.split(/\s+/);
+  const filtered = rawWords
+    .map(word => word.replace(/^[^a-zA-Z0-9-]+|[^a-zA-Z0-9-]+$/g, ''))
+    .filter(word => word && !STOP_WORDS.has(word.toLowerCase()));
+
+  const coreWords = (filtered.length ? filtered : rawWords).slice(0, maxWords);
+  return coreWords.join(' ');
+}
+
 function generateLocalDebateContent(topic: string): unknown {
   const rounds: unknown[] = [];
   const speakers = ['PRO', 'CON'];
   
   // Pro/Con framing
-  const words = topic.split(/\s+/);
-  const core = words.length > 3 ? words.slice(0, 4).join(' ') : topic;
+  const core = normalizeTopicCore(topic, 4);
   const proTemplates = [
     (t: string) => `${t.toUpperCase()} IS THE KEY TO HUMAN PROGRESS!`,
     (t: string) => `${t.toUpperCase()} BUILDS A BETTER FUTURE!`,
@@ -295,6 +368,27 @@ function generateLocalDebateContent(topic: string): unknown {
   };
 }
 
+function generateLocalFraming(topic: string): { topic: string; proHeadline: string; conHeadline: string } {
+  const core = normalizeTopicCore(topic, 4);
+  const proTemplates = [
+    (t: string) => `${t} can drive measurable progress when guided by evidence.`,
+    (t: string) => `${t} offers real opportunities for innovation and public benefit.`,
+    (t: string) => `${t} deserves support as a practical path to better outcomes.`,
+  ];
+  const conTemplates = [
+    (t: string) => `${t} carries risks that society is not prepared to manage.`,
+    (t: string) => `${t} can backfire without strict safeguards and accountability.`,
+    (t: string) => `${t} is overpromised and underprepared for real-world harm.`,
+  ];
+  const idx = Math.floor(Math.random() * proTemplates.length);
+
+  return {
+    topic,
+    proHeadline: proTemplates[idx](core),
+    conHeadline: conTemplates[idx](core),
+  };
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -304,6 +398,32 @@ export default defineConfig({
         const apiKey = process.env.GEMINI_API_KEY || '';
         const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
 
+        server.middlewares.use('/api/test-models', async (req, res) => {
+          if (!apiKey) {
+            res.statusCode = 500;
+            res.end('Missing GEMINI_API_KEY');
+            return;
+          }
+
+          try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+              res.statusCode = response.status;
+              res.end(`Failed to fetch models: ${response.status}`);
+              return;
+            }
+
+            const data = await response.json();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data, null, 2));
+          } catch (error) {
+            console.error('[Test] Failed to fetch models:', error);
+            res.statusCode = 500;
+            res.end('Failed to fetch models');
+          }
+        });
 
         server.middlewares.use('/api/ai', async (req, res) => {
           if (req.method !== 'POST') {
@@ -318,26 +438,17 @@ export default defineConfig({
             payload = JSON.parse(body || '{}') as { action?: string; topic?: string };
             const action = payload.action || 'generate_debate';
             const prompt = buildPrompt(action, payload.topic);
-            const text = await callGemini(prompt, apiKey, model);
+            const text = await callGeminiWithRetry(prompt, apiKey, model, 2);
             const json = extractJson(text);
 
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(json));
           } catch (error) {
-            // Fallback to local content only if AI fails
             const action = payload.action || 'generate_debate';
-
-            if (action === 'random_topic') {
-              const fallbackTopic = generateRandomLocalTopic();
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ topic: fallbackTopic }));
-              return;
-            }
-
-            const fallbackTopic = payload.topic?.trim() || generateRandomLocalTopic();
-            const debateContent = generateLocalDebateContent(fallbackTopic);
+            console.error(`[AI] Gemini proxy failed for action: ${action}`, error);
+            res.statusCode = 502;
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(debateContent));
+            res.end(JSON.stringify({ error: 'AI request failed. Please try again.' }));
           }
         });
       },
