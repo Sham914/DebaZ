@@ -80,9 +80,13 @@ async function callGeminiWithRetry(prompt: string, apiKey: string, model: string
       return await callGemini(prompt, apiKey, model);
     } catch (error) {
       lastError = error;
-      console.warn(`[Gemini] Attempt ${attempt}/${attempts} failed:`, error instanceof Error ? error.message : error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn(`[Gemini] Attempt ${attempt}/${attempts} failed:`, errorMsg);
+      
       if (attempt < attempts) {
-        const delay = 1000 * attempt;
+        // Exponential backoff: 2s, 4s, 8s, etc. for rate limits
+        const delay = 2000 * Math.pow(2, attempt - 1);
+        console.log(`[Gemini] Waiting ${delay}ms before retry...`);
         await wait(delay);
       }
     }
