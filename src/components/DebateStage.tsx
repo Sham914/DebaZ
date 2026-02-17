@@ -5,7 +5,6 @@ import Avatar from './Avatar';
 import SpeechBubble from './SpeechBubble';
 import ScoreMeter from './ScoreMeter';
 import VotePanel from './VotePanel';
-import EvidenceChart from './EvidenceChart';
 import { playDebateVoice, stopVoice } from '../engine/googleTtsVoiceService';
 
 export default function DebateStage() {
@@ -26,11 +25,6 @@ export default function DebateStage() {
   const voiceTaskRef = useRef<Promise<void> | null>(null);
 
   const currentRound = rounds[currentRoundIndex];
-
-  // Find evidence round data for chart
-  const proEvidenceRound = rounds.find(r => r.round === 3 && r.speaker === 'PRO');
-  const conEvidenceRound = rounds.find(r => r.round === 3 && r.speaker === 'CON');
-  const showChart = currentRound?.round === 3;
 
   const typeText = useCallback((text: string, round: typeof currentRound) => {
     setIsTyping(true);
@@ -94,6 +88,7 @@ export default function DebateStage() {
 
   const isPro = currentRound.speaker === 'PRO';
   const roundNum = Math.ceil((currentRoundIndex + 1) / 2);
+  const totalRounds = Math.ceil(rounds.length / 2);
 
   return (
     <div className="flex flex-col items-center min-h-screen px-4 py-8 relative z-10">
@@ -126,7 +121,7 @@ export default function DebateStage() {
         className="mb-4"
       >
         <p className="font-display text-arena-accent text-sm md:text-base uppercase tracking-widest text-center">
-          Round {roundNum} of 5 — {currentRound.speaker === 'PRO' ? 'ALEX' : 'SOPHIA'} Speaking
+          Round {roundNum} of {totalRounds} — {currentRound.speaker === 'PRO' ? 'ALEX' : 'SOPHIA'} Speaking
         </p>
       </motion.div>
 
@@ -150,16 +145,6 @@ export default function DebateStage() {
           {/* Sophia */}
           <Avatar name="SOPHIA" side="CON" isSpeaking={!isPro && isTyping} />
       </div>
-
-      {/* Evidence Chart */}
-      {showChart && proEvidenceRound && conEvidenceRound && (
-        <div className="w-full mb-8">
-          <EvidenceChart
-            proPoints={proEvidenceRound.data_points}
-            conPoints={conEvidenceRound.data_points}
-          />
-        </div>
-      )}
 
       {/* Round stats */}
       <motion.div

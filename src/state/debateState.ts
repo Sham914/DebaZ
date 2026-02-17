@@ -12,7 +12,7 @@ const isPlaceholderHeadline = (headline?: string) => {
   return normalized === 'supporting this position' || normalized === 'opposing this position';
 };
 
-const AI_RETRY_OPTIONS = { attempts: 2, delayMs: 1000 };
+const AI_RETRY_OPTIONS = { attempts: 1, delayMs: 1000 };
 
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'of', 'to', 'and', 'or', 'is', 'are', 'be', 'for', 'in', 'on', 'with', 'as', 'by', 'at', 'from',

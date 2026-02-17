@@ -50,10 +50,10 @@ function buildPrompt(action: string, topic?: string): string {
     '  "conHeadline": "string (8-14 words, sentence case, specific claim)",',
     '  "rounds": [',
     '    {',
-    '      "round": number (1-5),',
+    '      "round": number (1-3),',
     '      "speaker": "PRO" or "CON",',
     '      "headline": "string",',
-    '      "argument": "string (2-4 sentences)",',
+    '      "argument": "string (1-2 sentences, concise)",',
     '      "data_points": ["string", "string"],',
     '      "emotion_score": number (0-100),',
     '      "logic_score": number (0-100),',
@@ -61,8 +61,8 @@ function buildPrompt(action: string, topic?: string): string {
     '    }',
     '  ]',
     '}',
-    'Generate 10 rounds total (5 rounds, 2 speakers each, alternating PRO/CON).',
-    'Keep arguments concise, safe, and non-violent.',
+    'Generate 6 rounds total (3 rounds, 2 speakers each, alternating PRO/CON starting with PRO).',
+    'Keep arguments concise (1-2 sentences), safe, and non-violent.',
     `Topic: ${topic ?? ''}`,
     'Return ONLY the JSON object, nothing else.'
   ].join('\n');
@@ -88,9 +88,9 @@ async function callGemini(prompt: string, apiKey: string, model: string): Promis
         },
       ],
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.5,
         topP: 0.9,
-        maxOutputTokens: 8000,
+        maxOutputTokens: 4000,
       },
     }),
   });

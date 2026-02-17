@@ -22,7 +22,7 @@ DebaZ is an interactive debate platform that pits AI-generated arguments against
 
 - Input phase: Enter debate topic or get random generation
 - Framing phase: Reveals pro/con positions with animated headlines
-- Debate phase: 5 rounds of back-and-forth arguments with voice playback
+- Debate phase: 3 rounds of back-and-forth arguments with voice playback
 - Voting phase: Audience participation affects scoring
 - Victory screen: Final results with winner determination
 

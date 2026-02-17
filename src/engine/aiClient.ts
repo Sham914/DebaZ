@@ -61,7 +61,7 @@ function calcTotal(r: Omit<RoundData, 'total_score'>): number {
 
 function normalizeRound(raw: AiRawRound, index: number): RoundData {
   const speaker = raw.speaker === 'CON' ? 'CON' : 'PRO';
-  const round = typeof raw.round === 'number' && raw.round >= 1 && raw.round <= 5
+  const round = typeof raw.round === 'number' && raw.round >= 1 && raw.round <= 3
     ? raw.round
     : Math.floor(index / 2) + 1;
 
@@ -142,7 +142,7 @@ function ensureDebateResponse(raw: unknown): AiDebateResponse {
   }
 
   const rounds = data.rounds.map((round, index) => normalizeRound(round, index));
-  if (rounds.length < 4) {
+  if (rounds.length < 2) {
     throw new Error('AI response did not provide enough rounds.');
   }
 
