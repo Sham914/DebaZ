@@ -47,3 +47,5 @@ If AI fails, seamless fallback to local debate generation with same quality
 *Round Types:* Each debate has 5 structure-varied rounds covering Opening Statements, Rebuttals, Evidence/Data, Emotional Appeals, and Closing Arguments.
 
 *Performance:* Fast debates (2-3 seconds for AI generation), builds to 508KB minified, runs on any modern browser, no external dependencies for voice.
+
+test it live: https://debaz.vercel.app
