@@ -434,9 +434,9 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 852.0304391015864,
-			"y": 164.4700993581663,
-			"z": 0.33862957382949527,
+			"x": 400.2519375708317,
+			"y": 378.4903648858963,
+			"z": 0.499711170937944,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
@@ -1937,9 +1937,7 @@
 		{
 			"followingUserId": null,
 			"opacityForNextShape": 1,
-			"stylesForNextShape": {
-				"tldraw:color": "light-red"
-			},
+			"stylesForNextShape": {},
 			"brush": null,
 			"scribbles": [],
 			"cursor": {
