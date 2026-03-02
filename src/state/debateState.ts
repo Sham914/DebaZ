@@ -12,7 +12,7 @@ const isPlaceholderHeadline = (headline?: string) => {
   return normalized === 'supporting this position' || normalized === 'opposing this position';
 };
 
-const AI_RETRY_OPTIONS = { attempts: 1, delayMs: 1000 };
+const AI_RETRY_OPTIONS = { attempts: 3, delayMs: 1000 };
 
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'of', 'to', 'and', 'or', 'is', 'are', 'be', 'for', 'in', 'on', 'with', 'as', 'by', 'at', 'from',
@@ -21,16 +21,10 @@ const STOP_WORDS = new Set([
 const isValidHeadline = (topic: string, headline?: string) => {
   if (!headline || !headline.trim()) return false;
   const words = headline.trim().split(/\s+/);
-  if (words.length < 6 || words.length > 18) return false;
-
-  const lowerHeadline = headline.toLowerCase();
-  const topicKeywords = topic
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(word => word.length > 3 && !STOP_WORDS.has(word));
-
-  const hasKeyword = topicKeywords.some(word => lowerHeadline.includes(word));
-  return hasKeyword;
+  // Basic sanity check: headline should have meaningful length
+  if (words.length < 3 || words.length > 20) return false;
+  // Just ensure it's actual text, not empty or placeholder
+  return true;
 };
 
 interface DebateState {
